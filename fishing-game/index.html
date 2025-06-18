@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Fishing Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Fishing Game</h1>
+    <div id="game">
+        <div id="tokenDisplay">🪙 0</div>
+        <div id="inventoryIcon" title="Show Inventory">🎒</div>
+        <button id="aquariumButton">Aquarium</button>
+        <canvas id="fishingCanvas" width="600" height="700"></canvas>
+        <div id="result"></div>
+        <div id="score">Fish Caught: 0</div>
+        <button id="sellButton">Sell All</button>
+        <div id="inventoryModal" class="hidden">
+            <div id="inventoryContent">
+                <span id="closeInventory">&times;</span>
+                <h2>Inventory</h2>
+                <div id="inventoryList"></div>
+            </div>
+        </div>
+    </div>
+    <div id="aquariumScreen" class="hidden">
+        <button id="backToGame">Back to Game</button>
+        <h2>My Aquarium</h2>
+        <canvas id="aquariumCanvas" width="600" height="500"></canvas>
+        <div id="aquariumInfo">Click a fish in your inventory to add it here!</div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

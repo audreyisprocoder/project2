@@ -1,0 +1,218 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #aee9f7;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+#game {
+    margin: 30px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 640px;
+    position: relative;
+}
+#castButton {
+    padding: 10px 20px;
+    font-size: 18px;
+    background: #4fc3f7;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+#castButton:hover {
+    background: #0288d1;
+}
+#result {
+    font-size: 20px;
+    margin: 20px 0;
+    min-height: 24px;
+}
+#score {
+    font-weight: bold;
+    font-size: 18px;
+}
+#fishingCanvas {
+    background: linear-gradient(to bottom, #aee9f7 60%, #1976d2 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    display: block;
+    margin: 0 auto 20px auto;
+    border: 2px solid #0288d1;
+}
+#inventoryIcon {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 10;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+#inventoryIcon:hover {
+    background: #e3f2fd;
+}
+#inventoryModal {
+    position: fixed;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+#inventoryModal.hidden {
+    display: none;
+}
+#inventoryContent {
+    background: #fff;
+    border-radius: 10px;
+    padding: 30px 40px 20px 40px;
+    min-width: 260px;
+    min-height: 180px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    position: relative;
+}
+#closeInventory {
+    position: absolute;
+    right: 18px;
+    top: 10px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+#inventoryList {
+    margin-top: 18px;
+    text-align: left;
+    max-height: 220px;
+    overflow-y: auto;
+}
+#inventoryList .inv-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+#inventoryList .inv-shape {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+    display: inline-block;
+}
+#sellButton {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    padding: 10px 22px;
+    font-size: 1.1rem;
+    background: #ffd600;
+    border: none;
+    border-radius: 6px;
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background 0.2s;
+}
+#sellButton:hover {
+    background: #ffe082;
+}
+#tokenDisplay {
+    position: absolute;
+    left: 65px;
+    top: -18px;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #333;
+    background: #fffbe7;
+    border-radius: 8px;
+    padding: 6px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    z-index: 11;
+    min-width: 60px;
+    text-align: center;
+}
+#aquariumButton {
+    position: absolute;
+    right: 120px;
+    top: 20px;
+    padding: 10px 22px;
+    font-size: 1.1rem;
+    background: #4fc3f7;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background 0.2s;
+    z-index: 12;
+}
+#aquariumButton:hover {
+    background: #0288d1;
+}
+#aquariumScreen {
+    display: none;
+    position: absolute;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background: #e3f2fd;
+    z-index: 1000;
+    text-align: center;
+    padding-top: 30px;
+}
+#aquariumScreen:not(.hidden) {
+    display: block;
+}
+#aquariumCanvas {
+    background: linear-gradient(to bottom, #b3e5fc 60%, #0288d1 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    margin: 0 auto 20px auto;
+    border: 2px solid #0288d1;
+    display: block;
+}
+#backToGame {
+    position: absolute;
+    left: 30px;
+    top: 30px;
+    padding: 8px 18px;
+    font-size: 1rem;
+    background: #ffd600;
+    border: none;
+    border-radius: 6px;
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    transition: background 0.2s;
+    z-index: 12;
+}
+#backToGame:hover {
+    background: #ffe082;
+}
+#aquariumInfo {
+    margin-top: 10px;
+    font-size: 1.1rem;
+    color: #1976d2;
+}
+#inventoryList .inv-item.locked {
+    opacity: 0.5;
+    border: 2px solid #ffd600;
+    background: #fffde7;
+}
+#inventoryList .inv-item.locked::after {
+    content: '🔒';
+    margin-left: 8px;
+    font-size: 1.2rem;
+}
