@@ -27,8 +27,26 @@
     <div id="aquariumScreen" class="hidden">
         <button id="backToGame">Back to Game</button>
         <h2>My Aquarium</h2>
-        <canvas id="aquariumCanvas" width="600" height="500"></canvas>
-        <div id="aquariumInfo">Click a fish in your inventory to add it here!</div>
+        <div id="aquariumLayout">
+            <div id="aquariumInventory">
+                <h3>Your Inventory</h3>
+                <div id="aquariumInventoryList"></div>
+            </div>
+            <div id="aquariumMain">
+                <canvas id="aquariumCanvas" width="600" height="500"></canvas>
+                <div id="aquariumInfo">Drag a fish from your inventory onto the aquarium!</div>
+            </div>
+        </div>
+    </div>
+    <div id="catchBarPopup" class="hidden">
+        <div id="catchBarContainer">
+            <div id="catchBar">
+                <div id="catchBarRed"></div>
+                <div id="catchBarWhite"></div>
+                <div id="catchBarLine"></div>
+            </div>
+            <div id="catchBarMsg"></div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

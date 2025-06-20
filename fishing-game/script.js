@@ -19,6 +19,9 @@ const ctx = canvas.getContext('2d');
 const resultDiv = document.getElementById('result');
 const scoreDiv = document.getElementById('score');
 const tokenDisplay = document.getElementById('tokenDisplay');
+function updateTokenDisplay() {
+    tokenDisplay.textContent = `🪙 ${tokens}`;
+}
 
 // Add inventory
 let inventory = [];
@@ -397,6 +400,66 @@ function animate() {
 }
 animate();
 
+// --- CATCH BAR MECHANIC ---
+const catchBarPopup = document.getElementById('catchBarPopup');
+const catchBar = document.getElementById('catchBar');
+const catchBarLine = document.getElementById('catchBarLine');
+const catchBarMsg = document.getElementById('catchBarMsg');
+let catchBarActive = false;
+let catchBarLinePos = 0; // px from left
+let catchBarSpeed = 2; // px per tick
+let catchBarInterval = null;
+let catchBarRarity = 1;
+let catchBarCallback = null;
+
+function showCatchBar(rarity, callback) {
+    catchBarActive = true;
+    catchBarLinePos = 0;
+    catchBarRarity = rarity;
+    catchBarCallback = callback;
+    catchBarMsg.textContent = 'Click to keep the line in the white zone!';
+    catchBarPopup.classList.remove('hidden');
+    catchBarLine.style.left = '0px';
+    catchBarSpeed = 1.5 + rarity * 1.5; // higher rarity = faster
+    if (catchBarInterval) clearInterval(catchBarInterval);
+    catchBarInterval = setInterval(() => {
+        catchBarLinePos += catchBarSpeed;
+        if (catchBarLinePos >= 334) {
+            // Too slow, lost fish
+            endCatchBar(false, 'Too slow! The fish escaped.');
+        } else {
+            catchBarLine.style.left = catchBarLinePos + 'px';
+            // If in red zone (left 60px), lose
+            if (catchBarLinePos < 60) {
+                // nothing, waiting for click
+            } else if (catchBarLinePos < 280) {
+                // in white zone
+            } else if (catchBarLinePos >= 280) {
+                // getting close to end
+            }
+        }
+    }, 32);
+}
+function endCatchBar(success, msg) {
+    catchBarActive = false;
+    catchBarMsg.textContent = msg;
+    if (catchBarInterval) clearInterval(catchBarInterval);
+    setTimeout(() => {
+        catchBarPopup.classList.add('hidden');
+        if (catchBarCallback) catchBarCallback(success);
+    }, 900);
+}
+catchBarPopup.addEventListener('click', () => {
+    if (!catchBarActive) return;
+    // If in red zone
+    if (catchBarLinePos < 60 || catchBarLinePos > 280) {
+        endCatchBar(false, 'You clicked in the red zone! The fish escaped.');
+    } else {
+        endCatchBar(true, 'Great timing! You caught the fish!');
+    }
+});
+// --- END CATCH BAR ---
+
 canvas.addEventListener('click', () => {
     if (gameState === 'idle') {
         resultDiv.textContent = 'Waiting for a fish...';
@@ -404,45 +467,71 @@ canvas.addEventListener('click', () => {
         drawScene();
         startWait();
     } else if (gameState === 'waiting') {
-        // Too early
-        resultDiv.textContent = 'Too soon! Wait for a fish.';
-    } else if (gameState === 'fish-approaching') {
-        // Too early
-        resultDiv.textContent = 'Wait for the fish to reach the hook!';
-    } else if (gameState === 'fish-near') {
-        // Try to catch
-        clearTimeout(waitTimeout);
-        if (fishAnim) cancelAnimationFrame(fishAnim);
-        if (fish.name === 'Goldfish') {
-            resultDiv.textContent = 'You caught a goldfish!';
-            score++;
-            scoreDiv.textContent = `Fish Caught: ${score}`;
-        } else if (fish.name === 'Boot') {
-            resultDiv.textContent = 'You caught a boot! Try again.';
-        } else {
-            resultDiv.textContent = `You caught a ${fish.name}!`;
-            score++;
-            scoreDiv.textContent = `Fish Caught: ${score}`;
-        }
-        // Add to inventory
-        inventory.push({
-            name: fish.name,
-            color: fish.color,
-            shape: fish.shape,
-            size: fish.size
-        });
-        // Animate hook up
+        // If user clicks while waiting (no fish), bring rod back up
+        resultDiv.textContent = 'You reeled in your line.';
+        if (waitTimeout) clearTimeout(waitTimeout);
         let anim = setInterval(() => {
             if (hookY > 120) {
                 hookY -= 10;
                 drawScene();
             } else {
                 clearInterval(anim);
-                setTimeout(resetGame, 1000);
+                setTimeout(resetGame, 600);
             }
         }, 16);
-        gameState = 'caught';
-        drawScene(); // show caught fish clearly
+        gameState = 'idle';
+    } else if (gameState === 'fish-approaching') {
+        // Too early
+        resultDiv.textContent = 'Wait for the fish to reach the hook!';
+    } else if (gameState === 'fish-near') {
+        // Show catch bar instead of instant catch
+        clearTimeout(waitTimeout);
+        if (fishAnim) cancelAnimationFrame(fishAnim);
+        // Rarity: higher = faster bar
+        let rarity = 1;
+        for (let i = 0; i < fishTypes.length; ++i) {
+            if (fishTypes[i].name === fish.name) {
+                rarity = Math.max(1, Math.ceil(10 * (1 - fishTypes[i].chance)));
+                break;
+            }
+        }
+        showCatchBar(rarity, (success) => {
+            if (success) {
+                if (fish.name === 'Goldfish') {
+                    resultDiv.textContent = 'You caught a goldfish!';
+                    score++;
+                    scoreDiv.textContent = `Fish Caught: ${score}`;
+                } else if (fish.name === 'Boot') {
+                    resultDiv.textContent = 'You caught a boot! Try again.';
+                } else {
+                    resultDiv.textContent = `You caught a ${fish.name}!`;
+                    score++;
+                    scoreDiv.textContent = `Fish Caught: ${score}`;
+                }
+                // Add to inventory
+                inventory.push({
+                    name: fish.name,
+                    color: fish.color,
+                    shape: fish.shape,
+                    size: fish.size
+                });
+                // Animate hook up
+                let anim = setInterval(() => {
+                    if (hookY > 120) {
+                        hookY -= 10;
+                        drawScene();
+                    } else {
+                        clearInterval(anim);
+                        setTimeout(resetGame, 1000);
+                    }
+                }, 16);
+                gameState = 'caught';
+                drawScene(); // show caught fish clearly
+            } else {
+                resultDiv.textContent = 'The fish escaped!';
+                setTimeout(resetGame, 1000);
+            }
+        });
     } else if (gameState === 'caught') {
         // Ignore
     }
@@ -569,7 +658,7 @@ sellButton.addEventListener('click', () => {
     resultDiv.textContent = `Sold all for ${total} 🪙! Total tokens: ${tokens}`;
     scoreDiv.textContent = `Fish Caught: ${inventory.length}`;
     score = inventory.length;
-    updateTokenDisplay();
+    updateTokenDisplay(); // Ensure display updates after selling
 });
 
 // Aquarium navigation and logic
@@ -579,40 +668,109 @@ const backToGame = document.getElementById('backToGame');
 const aquariumCanvas = document.getElementById('aquariumCanvas');
 const aquariumInfo = document.getElementById('aquariumInfo');
 
-aquariumButton.addEventListener('click', () => {
-    document.getElementById('game').style.display = 'none';
-    aquariumScreen.classList.remove('hidden');
-    renderAquariumInfo();
-    startAquariumAnim();
-});
-backToGame.addEventListener('click', () => {
-    document.getElementById('game').style.display = '';
-    aquariumScreen.classList.add('hidden');
-    stopAquariumAnim();
-});
-function renderAquariumInfo() {
-    if (aquarium.length === 0) {
-        aquariumInfo.textContent = 'Click a fish in your inventory to add it here!';
-    } else {
-        aquariumInfo.textContent = 'Your aquarium fish will swim here!';
+// Aquarium inventory rendering and drag-drop logic
+const aquariumInventoryList = document.getElementById('aquariumInventoryList');
+let aquariumFish = [];
+
+function renderAquariumInventory() {
+    aquariumInventoryList.innerHTML = '';
+    if (inventory.length === 0) {
+        aquariumInventoryList.textContent = 'No fish or animals in your inventory!';
+        return;
     }
+    inventory.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'inv-item';
+        div.draggable = true;
+        // Draw a mini canvas for the shape
+        const shapeCanvas = document.createElement('canvas');
+        shapeCanvas.width = 36; shapeCanvas.height = 36;
+        shapeCanvas.className = 'inv-shape';
+        const sctx = shapeCanvas.getContext('2d');
+        sctx.save();
+        sctx.translate(18, 18);
+        sctx.scale(item.size || 0.8, item.size || 0.8);
+        // Draw shape (reuse draw logic)
+        if (item.shape === 'turtle') {
+            sctx.beginPath(); sctx.ellipse(0, 0, 18, 12, 0, 0, 2 * Math.PI); sctx.fillStyle = item.color; sctx.fill();
+            sctx.beginPath(); sctx.arc(20, 0, 6, 0, 2 * Math.PI); sctx.fillStyle = '#689f38'; sctx.fill();
+            sctx.beginPath(); sctx.arc(-10, -10, 3, 0, 2 * Math.PI); sctx.fill();
+            sctx.beginPath(); sctx.arc(-10, 10, 3, 0, 2 * Math.PI); sctx.fill();
+            sctx.beginPath(); sctx.arc(10, -10, 3, 0, 2 * Math.PI); sctx.fill();
+            sctx.beginPath(); sctx.arc(10, 10, 3, 0, 2 * Math.PI); sctx.fill();
+        } else if (item.shape === 'crab') {
+            sctx.beginPath(); sctx.arc(0, 0, 10, 0, 2 * Math.PI); sctx.fillStyle = item.color; sctx.fill();
+            sctx.strokeStyle = item.color; sctx.lineWidth = 2;
+            for (let i = -1; i <= 1; i += 2) {
+                sctx.beginPath(); sctx.moveTo(i*8, 5); sctx.lineTo(i*16, 12); sctx.stroke();
+                sctx.beginPath(); sctx.moveTo(i*8, -5); sctx.lineTo(i*16, -12); sctx.stroke();
+            }
+            sctx.beginPath(); sctx.arc(-14, -8, 4, 0, Math.PI*2); sctx.stroke();
+            sctx.beginPath(); sctx.arc(14, -8, 4, 0, Math.PI*2); sctx.stroke();
+        } else if (item.shape === 'jellyfish') {
+            sctx.beginPath(); sctx.ellipse(0, 0, 10, 12, 0, Math.PI, 2 * Math.PI); sctx.fillStyle = item.color; sctx.fill();
+            sctx.globalAlpha = 0.5;
+            for (let i = -1; i <= 1; i++) {
+                sctx.beginPath(); sctx.moveTo(i*5, 10); sctx.bezierCurveTo(i*5, 18, i*10, 22, i*2, 28); sctx.strokeStyle = item.color; sctx.lineWidth = 2; sctx.stroke();
+            }
+            sctx.globalAlpha = 1;
+        } else if (item.shape === 'starfish') {
+            sctx.save(); sctx.rotate(Math.PI/5);
+            sctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                sctx.lineTo(Math.cos((18 + i * 72) * Math.PI/180) * 12, Math.sin((18 + i * 72) * Math.PI/180) * 12);
+                sctx.lineTo(Math.cos((54 + i * 72) * Math.PI/180) * 5, Math.sin((54 + i * 72) * Math.PI/180) * 5);
+            }
+            sctx.closePath(); sctx.fillStyle = item.color; sctx.fill(); sctx.restore();
+        } else {
+            sctx.beginPath(); sctx.ellipse(0, 0, 28, 14, 0, 0, 2 * Math.PI); sctx.fillStyle = item.color; sctx.fill();
+            sctx.beginPath(); sctx.moveTo(-28, 0); sctx.lineTo(-40, -10); sctx.lineTo(-40, 10); sctx.closePath(); sctx.fillStyle = item.color; sctx.globalAlpha = 0.8; sctx.fill(); sctx.globalAlpha = 1;
+            sctx.beginPath(); sctx.arc(12, -4, 2.5, 0, 2 * Math.PI); sctx.fillStyle = '#fff'; sctx.fill();
+            sctx.beginPath(); sctx.arc(13, -4, 1, 0, 2 * Math.PI); sctx.fillStyle = '#222'; sctx.fill();
+        }
+        sctx.restore();
+        div.appendChild(shapeCanvas);
+        div.appendChild(document.createTextNode(item.name));
+        // Drag events
+        div.addEventListener('dragstart', e => {
+            div.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', idx);
+        });
+        div.addEventListener('dragend', () => {
+            div.classList.remove('dragging');
+        });
+        aquariumInventoryList.appendChild(div);
+    });
 }
+
+aquariumCanvas.addEventListener('dragover', e => {
+    e.preventDefault();
+});
+aquariumCanvas.addEventListener('drop', e => {
+    e.preventDefault();
+    const idx = e.dataTransfer.getData('text/plain');
+    if (typeof idx === 'string' && inventory[idx]) {
+        // Add a copy to aquariumFish
+        const f = inventory[idx];
+        aquariumFish.push({
+            ...f,
+            x: e.offsetX,
+            y: e.offsetY,
+            dir: Math.random() < 0.5 ? 1 : -1,
+            vx: (Math.random() * 1.5 + 0.5) * (Math.random() < 0.5 ? 1 : -1),
+            vy: (Math.random() * 1.2 - 0.6)
+        });
+    }
+});
+
 // Animate aquarium fish swimming
 let aquariumAnimId = null;
 function startAquariumAnim() {
     if (!aquariumCanvas) return;
-    let fishStates = aquarium.map(f => ({
-        ...f,
-        x: Math.random() * (aquariumCanvas.width - 60) + 30,
-        y: Math.random() * (aquariumCanvas.height - 60) + 30,
-        dir: Math.random() < 0.5 ? 1 : -1,
-        vx: (Math.random() * 1.5 + 0.5) * (Math.random() < 0.5 ? 1 : -1),
-        vy: (Math.random() * 1.2 - 0.6)
-    }));
     function step() {
         const ctx = aquariumCanvas.getContext('2d');
         ctx.clearRect(0, 0, aquariumCanvas.width, aquariumCanvas.height);
-        for (let f of fishStates) {
+        for (let f of aquariumFish) {
             // Bounce off walls
             if (f.x < 30 || f.x > aquariumCanvas.width - 30) f.vx *= -1, f.dir *= -1;
             if (f.y < 30 || f.y > aquariumCanvas.height - 30) f.vy *= -1;
@@ -629,50 +787,20 @@ function stopAquariumAnim() {
     const ctx = aquariumCanvas.getContext('2d');
     ctx.clearRect(0, 0, aquariumCanvas.width, aquariumCanvas.height);
 }
-function drawFishAquarium(ctx, fishObj) {
-    ctx.save();
-    ctx.translate(fishObj.x, fishObj.y);
-    ctx.scale(fishObj.dir, 1);
-    let scale = fishObj.size || 0.8;
-    ctx.globalAlpha = 0.9;
-    ctx.scale(scale, scale);
-    // Use same shape logic as drawFish
-    if (fishObj.shape === 'turtle') {
-        ctx.beginPath(); ctx.ellipse(0, 0, 18, 12, 0, 0, 2 * Math.PI); ctx.fillStyle = fishObj.color; ctx.fill();
-        ctx.beginPath(); ctx.arc(20, 0, 6, 0, 2 * Math.PI); ctx.fillStyle = '#689f38'; ctx.fill();
-        ctx.beginPath(); ctx.arc(-10, -10, 3, 0, 2 * Math.PI); ctx.fill();
-        ctx.beginPath(); ctx.arc(-10, 10, 3, 0, 2 * Math.PI); ctx.fill();
-        ctx.beginPath(); ctx.arc(10, -10, 3, 0, 2 * Math.PI); ctx.fill();
-        ctx.beginPath(); ctx.arc(10, 10, 3, 0, 2 * Math.PI); ctx.fill();
-    } else if (fishObj.shape === 'crab') {
-        ctx.beginPath(); ctx.arc(0, 0, 10, 0, 2 * Math.PI); ctx.fillStyle = fishObj.color; ctx.fill();
-        ctx.strokeStyle = fishObj.color; ctx.lineWidth = 2;
-        for (let i = -1; i <= 1; i += 2) {
-            ctx.beginPath(); ctx.moveTo(i*8, 5); ctx.lineTo(i*16, 12); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(i*8, -5); ctx.lineTo(i*16, -12); ctx.stroke();
-        }
-        ctx.beginPath(); ctx.arc(-14, -8, 4, 0, Math.PI*2); ctx.stroke();
-        ctx.beginPath(); ctx.arc(14, -8, 4, 0, Math.PI*2); ctx.stroke();
-    } else if (fishObj.shape === 'jellyfish') {
-        ctx.beginPath(); ctx.ellipse(0, 0, 10, 12, 0, Math.PI, 2 * Math.PI); ctx.fillStyle = fishObj.color; ctx.fill();
-        ctx.globalAlpha = 0.5;
-        for (let i = -1; i <= 1; i++) {
-            ctx.beginPath(); ctx.moveTo(i*5, 10); ctx.bezierCurveTo(i*5, 18, i*10, 22, i*2, 28); ctx.strokeStyle = fishObj.color; ctx.lineWidth = 2; ctx.stroke();
-        }
-        ctx.globalAlpha = 1;
-    } else if (fishObj.shape === 'starfish') {
-        ctx.save(); ctx.rotate(Math.PI/5);
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            ctx.lineTo(Math.cos((18 + i * 72) * Math.PI/180) * 12, Math.sin((18 + i * 72) * Math.PI/180) * 12);
-            ctx.lineTo(Math.cos((54 + i * 72) * Math.PI/180) * 5, Math.sin((54 + i * 72) * Math.PI/180) * 5);
-        }
-        ctx.closePath(); ctx.fillStyle = fishObj.color; ctx.fill(); ctx.restore();
-    } else {
-        ctx.beginPath(); ctx.ellipse(0, 0, 28, 14, 0, 0, 2 * Math.PI); ctx.fillStyle = fishObj.color; ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-28, 0); ctx.lineTo(-40, -10); ctx.lineTo(-40, 10); ctx.closePath(); ctx.fillStyle = fishObj.color; ctx.globalAlpha = 0.8; ctx.fill(); ctx.globalAlpha = 1;
-        ctx.beginPath(); ctx.arc(12, -4, 2.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
-        ctx.beginPath(); ctx.arc(13, -4, 1, 0, 2 * Math.PI); ctx.fillStyle = '#222'; ctx.fill();
-    }
-    ctx.restore();
-}
+
+aquariumButton.addEventListener('click', () => {
+    document.getElementById('game').style.display = 'none';
+    aquariumScreen.classList.remove('hidden');
+    renderAquariumInfo();
+    renderAquariumInventory();
+    startAquariumAnim();
+});
+backToGame.addEventListener('click', () => {
+    document.getElementById('game').style.display = '';
+    aquariumScreen.classList.add('hidden');
+    stopAquariumAnim();
+});
+
+// Also update on page load and after any token change
+updateTokenDisplay();
+// If tokens can change elsewhere, call updateTokenDisplay() after those changes as well.
