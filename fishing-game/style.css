@@ -128,21 +128,6 @@ body {
 #sellButton:hover {
     background: #ffe082;
 }
-#tokenDisplay {
-    position: absolute;
-    left: 65px;
-    top: -18px;
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #333;
-    background: #fffbe7;
-    border-radius: 8px;
-    padding: 6px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-    z-index: 11;
-    min-width: 60px;
-    text-align: center;
-}
 #aquariumButton {
     position: absolute;
     right: 120px;
@@ -327,4 +312,58 @@ body {
     content: '🔒';
     margin-left: 8px;
     font-size: 1.2rem;
+}
+#aquariumLayoutPopup {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    min-width: 350px;
+}
+#aquariumInventoryPopup {
+    min-width: 120px;
+    max-width: 160px;
+    margin-right: 18px;
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 10px 6px 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    min-height: 180px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+#aquariumInventoryListPopup .inv-item {
+    cursor: grab;
+    margin-bottom: 6px;
+    background: #e3f2fd;
+    border-radius: 6px;
+    padding: 3px 5px;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+#aquariumInventoryListPopup .inv-item.dragging {
+    opacity: 0.5;
+}
+#aquariumMainPopup {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#aquariumCanvasPopup {
+    background: linear-gradient(to bottom, #b3e5fc 60%, #0288d1 100%);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    margin: 0 auto 10px auto;
+    border: 2px solid #0288d1;
+    display: inline-block;
+    vertical-align: top;
+}
+#aquariumInfoPopup {
+    margin-top: 6px;
+    font-size: 1rem;
+    color: #1976d2;
+    clear: both;
 }
